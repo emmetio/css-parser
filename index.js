@@ -74,7 +74,7 @@ export default function parseCSS(source) {
 			}
 
 			stream.next();
-			child = new Node('section', name, createToken(stream, stream.pos));
+			child = new Node('rule', name, createToken(stream, stream.pos));
 			ctx.addChild(child);
 			ctx = child;
 			name = ident = child = null;
