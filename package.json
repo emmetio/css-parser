@@ -4,7 +4,7 @@
   "description": "CSS/LESS/SCSS fast and minimalistic parser",
   "main": "index.js",
   "dependencies": {
-    "@emmetio/stream-reader": "^2.0.1",
+    "@emmetio/stream-reader": "^2.1.0",
     "@emmetio/stream-reader-utils": "^0.1.0"
   },
   "devDependencies": {
