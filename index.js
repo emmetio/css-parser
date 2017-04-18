@@ -31,7 +31,7 @@ export default function parseCSS(source) {
 		}
 
 		ch = stream.peek();
-					if (eatIdent(stream)) {
+		if (eatIdent(stream)) {
 			if (ch === 64 /* @ */) {
 				// Edge case for some CSS properties like `@import`:
 				// at-rules always starts a new property or section

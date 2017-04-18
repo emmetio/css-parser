@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
 require('babel-register');
-const parse = require('../index').default;
+const parse = require('../lib/parser').default;
 
 describe('CSS Parser', () => {
 	const readFile = file => fs.readFileSync(path.resolve(__dirname, file), 'utf8');
