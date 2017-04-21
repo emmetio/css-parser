@@ -19,35 +19,30 @@ describe('CSS Parser', () => {
 		assert.equal(node.name, '@a');
 		assert.equal(node.value, '10');
 		assert.equal(node.terminator, ';');
-		assert.equal(node.children.length, 0);
 
 		node = model.children[1];
 		assert.equal(node.name, '$bc');
 		assert.equal(node.value, 'foo');
 		assert.equal(node.terminator, ';');
 		assert.equal(node.type, 'property');
-		assert.equal(node.children.length, 0);
 
 		node = model.children[2];
 		assert.equal(node.name, '@import');
 		assert.equal(node.value, '"url"');
 		assert.equal(node.terminator, ';');
 		assert.equal(node.type, 'property');
-		assert.equal(node.children.length, 0);
 
 		node = model.children[3];
 		assert.equal(node.name, '@import');
 		assert.equal(node.value, '"a", "b"');
 		assert.equal(node.terminator, ';');
 		assert.equal(node.type, 'property');
-		assert.equal(node.children.length, 0);
 
 		node = model.children[4];
 		assert.equal(node.name, '@import');
 		assert.equal(node.value, 'url("foo bar")');
-		assert.equal(node.terminator, '');
+		assert.equal(node.terminator, undefined);
 		assert.equal(node.type, 'property');
-		assert.equal(node.children.length, 0);
 	});
 
 	it('should parse sections', () => {
@@ -59,7 +54,6 @@ describe('CSS Parser', () => {
 		node = model.children[0];
 		assert.equal(node.type, 'rule');
 		assert.equal(node.name, 'body');
-		assert.equal(node.terminator, '}');
 		assert.equal(node.children.length, 2);
 
 		assert.equal(node.children[0].type, 'property');
@@ -72,7 +66,6 @@ describe('CSS Parser', () => {
 		node = model.children[1];
 		assert.equal(node.type, 'rule');
 		assert.equal(node.name, '@media print');
-		assert.equal(node.terminator, '}');
 		assert.equal(node.children.length, 1);
 
 		assert.equal(node.children[0].type, 'rule');
@@ -96,7 +89,6 @@ describe('CSS Parser', () => {
 		assert.equal(node.children[2].type, 'property');
 		assert.equal(node.children[2].name, '#baz.bar');
 		assert.equal(node.children[2].value, null);
-		assert.equal(node.children[2].terminator, '');
 
 		// test multiline sector
 		node = model.children[2];
