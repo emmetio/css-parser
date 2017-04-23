@@ -64,8 +64,11 @@ describe('CSS Parser', () => {
 		assert.equal(node.children[1].name, '&:hover &::before');
 
 		node = model.children[1];
-		assert.equal(node.type, 'rule');
-		assert.equal(node.name, '@media print');
+		assert.equal(node.type, 'at-rule');
+		assert.equal(node.name, '@media');
+		assert.equal(node.expressions.length, 1);
+		assert.equal(node.expressions[0].type, 'fragments');
+		assert.equal(node.expressions[0].valueOf(), 'print');
 		assert.equal(node.children.length, 1);
 
 		assert.equal(node.children[0].type, 'rule');
