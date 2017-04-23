@@ -83,4 +83,27 @@ describe('Rule Fragments', () => {
 		assert.equal(expr.type, 'fragments');
 		assert.equal(expr.valueOf(), 'handheld and (orientation: landscape)');
 	});
+
+	it('should consume pseudo-selectors', () => {
+		const rule = parseRule('a:hover, b::before {  }');
+
+		assert.equal(rule.name, 'a:hover, b::before');
+		assert.equal(rule.nameToken.fragments.length, 2);
+
+		let sel = rule.nameToken.fragments[0];
+		assert.equal(sel.fragments.length, 2);
+		assert.equal(sel.fragments[0].type, 'ident');
+		assert.equal(sel.fragments[0].valueOf(), 'a');
+		assert.equal(sel.fragments[1].type, 'pseudo');
+		assert.equal(sel.fragments[1].valueOf(), ':hover');
+		assert.equal(sel.fragments[1].name.valueOf(), 'hover');
+
+		sel = rule.nameToken.fragments[1];
+		assert.equal(sel.fragments.length, 2);
+		assert.equal(sel.fragments[0].type, 'ident');
+		assert.equal(sel.fragments[0].valueOf(), 'b');
+		assert.equal(sel.fragments[1].type, 'pseudo');
+		assert.equal(sel.fragments[1].valueOf(), '::before');
+		assert.equal(sel.fragments[1].name.valueOf(), 'before');
+	});
 });
