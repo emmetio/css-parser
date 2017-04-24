@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
 require('babel-register');
-const parse = require('../lib/parser').default;
+const parse = require('../index').default;
 
 describe('Rule Fragments', () => {
 	const parseRule = sel => parse(sel).firstChild;

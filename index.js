@@ -1,116 +1,59 @@
 'use strict';
 
 import StreamReader from '@emmetio/stream-reader';
-import { isSpace } from '@emmetio/stream-reader-utils';
-import Node from './lib/node';
-import createToken from './lib/token';
-import eatComment from './lib/parser/comment';
-import eatIdent from './lib/parser/identifier';
-import {
-	isSectionStart, isSectionEnd,
-	isPropertySeparator, isPropertyTerminator
-} from './lib/parser/separator';
+import Stylesheet from './lib/stylesheet';
+import createRule from './lib/rule';
+import createProperty from './lib/property';
+import token, { unknown, Token } from './lib/tokens/index';
 
-/**
- * Parses given CSS (or stylesheet) code into a very simple and minimalistic
- * object model
- * @param  {StreamReader|String} source
- * @return {Node}
- */
-export default function parseCSS(source) {
+export default function(source) {
 	const stream = typeof source === 'string' ? new StreamReader(source) : source;
-	const root = new Node('root');
-	let ctx = root, child, ch;
-
-	/** @type {Token} */
-	let ident, name;
+	const root = new Stylesheet();
+	let tokens = [];
+	let ctx = root, child, t;
 
 	while (!stream.eof()) {
-		if (stream.eatWhile(isSpace) || eatComment(stream)) {
-			continue;
-		}
+		t = token(stream);
 
-		ch = stream.peek();
-		if (eatIdent(stream)) {
-			if (ch === 64 /* @ */) {
-				// Edge case for some CSS properties like `@import`:
-				// at-rules always starts a new property or section
-				name = createToken(stream);
-				ident = null;
-			} else {
-				ident = createToken(stream, ident && ident.start);
-			}
-		} else if (isPropertySeparator(ch)) {
-			// Could be a property separator or a part of selector
-			if (name) {
-				// Already splitted by `:`, looks like pseudo-selector
-				name = createToken(stream, name.start, ident ? ident.end : name.end);
-			} else if (ident) {
-				name = ident;
-			} else {
-				// No consumed data before `:`, it might be a special CSS
-				// selector like `::slotted()`. Should create an empty name
-				// pointer
-				name = createToken(stream, stream.pos);
-			}
-			ident = null;
-			stream.next();
-		} else if (isPropertyTerminator(ch)) {
-			// data consumed before is a CSS property, create node for it
+		if (!t) {
+			// unable to identify following character, consume it as unknown token
 			stream.start = stream.pos;
 			stream.next();
-			ctx.addChild(createProperty(name, ident, createToken(stream)));
-			name = ident = null;
-		} else if (isSectionStart(ch)) {
-			// Data consumed before is a CSS selector, create node for it
-			if (name && ident) {
-				// Seems like property-value pair, combine it into a single selector
-				name = createToken(stream, name.start, ident.end);
-			} else if (ident) {
-				name = ident;
-			} else {
-				// Something weird: no section name. Create empty stub for it
-				name = createToken(stream, stream.pos);
+			tokens.push(unknown(stream));
+		} else if (t.propertyTerminator) {
+			// Tokens consumed before are CSS property
+			tokens.push(t);
+			ctx.addChild(createProperty(stream, tokens, t));
+			tokens = [];
+		} else if (t.ruleStart) {
+			// Tokens consumed before are CSS rule
+			child = createRule(stream, tokens, t);
+			if (child) {
+				ctx.addChild(child);
+				ctx = child;
 			}
+			tokens = [];
+		} else if (t.ruleEnd) {
+			// Finalize previously consumed tokens as CSS property
+			ctx.addChild(createProperty(stream, tokens));
+			tokens = [];
 
-			stream.next();
-			child = new Node('rule', name, createToken(stream, stream.pos));
-			ctx.addChild(child);
-			ctx = child;
-			name = ident = child = null;
-		} else if (isSectionEnd(ch)) {
-			// Finalize context section
-			if (name || ident) {
-				// There’s pending CSS property
-				ctx.addChild(createProperty(name, ident));
-			}
-
-			stream.start = stream.pos;
-			stream.next();
-			ident = createToken(stream);
-
+			// In case of invalid stylesheet with redundant `}`,
+			// don’t modify root section.
 			if (ctx.type !== 'root') {
-				// In case of invalid stylesheet with redundant `}`,
-				// don’t modify root section.
-				ctx._value = createToken(stream, ctx._value.start, stream.start);
-				ctx._terminator = createToken(stream);
+				ctx.contentEnd = t;
 			}
 
 			ctx = ctx.parent || ctx;
-			name = ident = child = null;
 		} else {
-			throw new Error(`Unexpected ${String.fromCharCode(ch)} at ${stream.pos}`);
+			tokens.push(t);
 		}
 	}
 
-	if (name || ident) {
-		// There’s pending CSS property
-		ctx.addChild(createProperty(name, ident));
-	}
+	// save unterminated tokens as property
+	ctx.addChild(createProperty(stream, tokens));
 
 	return root;
 }
 
-function createProperty(name, value, terminator) {
-	return new Node('property', name || value, name ? value : null, terminator);
-}
+export { token, createProperty, createRule, Token }
