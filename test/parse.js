@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
 require('babel-register');
-const parse = require('../index').default;
+const parse = require('../lib/preparse').default;
 
 describe('CSS Parser', () => {
 	const readFile = file => fs.readFileSync(path.resolve(__dirname, file), 'utf8');
@@ -66,9 +66,9 @@ describe('CSS Parser', () => {
 		node = model.children[1];
 		assert.equal(node.type, 'at-rule');
 		assert.equal(node.name, '@media');
-		assert.equal(node.expressions.length, 1);
-		assert.equal(node.expressions[0].type, 'fragments');
-		assert.equal(node.expressions[0].valueOf(), 'print');
+		assert.equal(node.expressions, 'print');
+		// assert.equal(node.expressions[0].type, 'fragments');
+		// assert.equal(node.expressions[0].valueOf(), 'print');
 		assert.equal(node.children.length, 1);
 
 		assert.equal(node.children[0].type, 'rule');
