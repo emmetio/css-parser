@@ -47,7 +47,7 @@ export default function parseStylesheet(source) {
 				// Finalize context section
 				ctx.addChild(createProperty(stream, tokens));
 
-				if (ctx.type !== 'root') {
+				if (ctx.type !== 'stylesheet') {
 					// In case of invalid stylesheet with redundant `}`,
 					// don’t modify root section.
 					ctx.contentRange.end = token.end;
