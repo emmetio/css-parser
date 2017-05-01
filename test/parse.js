@@ -125,4 +125,16 @@ describe('CSS Parser', () => {
 		assert.equal(node.name, 'padding');
 		assert.equal(node.value, '0');
 	});
+
+	it('should handle url() token', () => {
+		const model = parse(readFile('./fixtures/url.css'));
+		assert.equal(model.children.length, 2);
+
+		let node = model.firstChild;
+		assert.equal(node.children.length, 2);
+		assert.equal(node.children[0].name, 'font-family');
+		assert.equal(node.children[0].value, '\'RubArial\'');
+		assert.equal(node.children[1].name, 'src');
+		assert.equal(node.children[1].value.length, 3132);
+	});
 });

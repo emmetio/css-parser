@@ -64,7 +64,10 @@ export default function parseStylesheet(source) {
 			accum && tokens.push(accum);
 			accum = null;
 			tokens.push(token);
-		} else if (eatBraces(stream) || eatString(stream) || !isNaN(stream.next())) {
+		} else if (eatUrl(stream) || eatBraces(stream) || eatString(stream) || !isNaN(stream.next())) {
+			// NB explicitly consume `url()` token since it may contain
+			// an unquoted url like `http://example.com` which interferes
+			// with single-line comment
 			accum = accum || new Token(stream, 'preparse');
 			accum.end = stream.pos;
 		} else {
@@ -100,10 +103,7 @@ function eatBraces(stream) {
 				}
 			} else if (stream.eat(LBRACE)) {
 				stack++;
-			}else {
-				// NB explicitly consume `url()` token since it may contain
-				// an unquoted url like `http://example.com` which interferes
-				// with single-line comment
+			} else {
 				eatUrl(stream) || eatString(stream) || eatComment(stream) || stream.next();
 			}
 		}
