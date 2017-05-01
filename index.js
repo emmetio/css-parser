@@ -19,7 +19,7 @@ const RBRACE = 41;  // )
 export default function parseStylesheet(source) {
 	const stream = typeof source === 'string' ? new StreamReader(source) : source;
 	const root = new Stylesheet();
-	let ctx = root, child, accum, token, type;
+	let ctx = root, child, accum, token;
 	let tokens = [];
 
 	while (!stream.eof()) {
@@ -33,30 +33,36 @@ export default function parseStylesheet(source) {
 			// Consumed separator, create either rule or property from it
 			accum && tokens.push(accum);
 			accum = null;
-			type = token.property('type');
 
-			if (type === 'propertyTerminator') {
-				ctx.addChild(createProperty(stream, tokens, token));
-				tokens = [];
-			} else if (type === 'ruleStart') {
-				child = createRule(stream, tokens, token);
-				ctx.addChild(child);
-				ctx = child;
-				tokens = [];
-			} else if (type === 'ruleEnd') {
-				// Finalize context section
-				ctx.addChild(createProperty(stream, tokens));
+			switch (token.property('type')) {
+				case 'propertyTerminator':
+					ctx.addChild(createProperty(stream, tokens, token));
+					tokens.length = 0;
+					break;
 
-				if (ctx.type !== 'stylesheet') {
-					// In case of invalid stylesheet with redundant `}`,
-					// don’t modify root section.
-					ctx.contentToken.end = token.end;
-					ctx = ctx.parent;
-				}
+				case 'ruleStart':
+					child = createRule(stream, tokens, token);
+					ctx.addChild(child);
+					ctx = child;
+					tokens.length = 0;
+					break;
 
-				tokens = [];
-			} else {
-				tokens.push(token);
+				case 'ruleEnd':
+					// Finalize context section
+					ctx.addChild(createProperty(stream, tokens));
+
+					if (ctx.type !== 'stylesheet') {
+						// In case of invalid stylesheet with redundant `}`,
+						// don’t modify root section.
+						ctx.contentToken.end = token.end;
+						ctx = ctx.parent;
+					}
+
+					tokens.length = 0;
+					break;
+
+				default:
+					tokens.push(token);
 			}
 		} else if (token = atKeyword(stream)) {
 			// Explictly consume @-tokens since it defines how rule or property

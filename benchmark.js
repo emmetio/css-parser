@@ -16,6 +16,7 @@ const model = parser.default(css);
 console.profileEnd('Parse CSS');
 
 console.log(model.children.length);
+// console.log(model.children.map(node => node.name).join('\n'));
 
 // console.time('CSS Tree');
 // const ast = csstree.parse(css);
