@@ -50,7 +50,7 @@ export default function parseStylesheet(source) {
 				if (ctx.type !== 'stylesheet') {
 					// In case of invalid stylesheet with redundant `}`,
 					// don’t modify root section.
-					ctx.contentRange.end = token.end;
+					ctx.contentToken.end = token.end;
 					ctx = ctx.parent;
 				}
 
