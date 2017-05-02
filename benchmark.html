@@ -8,17 +8,21 @@
 	<title>CSS parser</title>
 </head>
 <body>
+	<button onclick="parse()">Parse</button>
 	<script>
-	console.log(cssParser);
+	let source = null;
 	fetch('./test/fixtures/ayyo.css')
 	.then(res => res.text())
 	.then(css => {
-		console.profile('Parse CSS');
-		const model = cssParser.default(css);
-		console.profileEnd('Parse CSS');
+		source = css
+	});
 
+	function parse() {
+		console.profile('Parse CSS');
+		const model = cssParser.default(source);
+		console.profileEnd('Parse CSS');
 		console.log(model.children.length);
-	})
+	}
 	</script>
 </body>
 </html>
