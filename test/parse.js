@@ -53,7 +53,7 @@ describe('CSS Parser', () => {
 
 		node = model.children[0];
 		assert.equal(node.type, 'rule');
-		assert.equal(node.name, 'body');
+		assert.equal(node.selector, 'body');
 		assert.equal(node.children.length, 2);
 
 		assert.equal(node.children[0].type, 'property');
@@ -61,24 +61,24 @@ describe('CSS Parser', () => {
 		assert.equal(node.children[0].value, '10px');
 
 		assert.equal(node.children[1].type, 'rule');
-		assert.equal(node.children[1].name, '&:hover &::before');
+		assert.equal(node.children[1].selector, '&:hover &::before');
 
 		node = model.children[1];
 		assert.equal(node.type, 'at-rule');
-		assert.equal(node.name, '@media');
-		assert.equal(node.expressions, 'print');
+		assert.equal(node.name, 'media');
+		assert.equal(node.expression, 'print');
 		// assert.equal(node.expressions[0].type, 'fragments');
 		// assert.equal(node.expressions[0].valueOf(), 'print');
 		assert.equal(node.children.length, 1);
 
 		assert.equal(node.children[0].type, 'rule');
-		assert.equal(node.children[0].name, 'a[foo="b:a;r"]::before');
+		assert.equal(node.children[0].selector, 'a[foo="b:a;r"]::before');
 		assert.equal(node.children[0].children.length, 1);
 
 		// test complex selector with LESS-style mixins
 		node = node.children[0].firstChild;
 		assert.equal(node.type, 'rule');
-		assert.equal(node.name, '::slotted(.foo)');
+		assert.equal(node.selector, '::slotted(.foo)');
 		assert.equal(node.children.length, 3);
 
 		assert.equal(node.children[0].type, 'property');
@@ -96,7 +96,7 @@ describe('CSS Parser', () => {
 		// test multiline sector
 		node = model.children[2];
 		assert.equal(node.type, 'rule');
-		assert.equal(node.name, '.foo,\n#bar');
+		assert.equal(node.selector, '.foo,\n#bar');
 		assert.equal(node.children.length, 1);
 
 		assert.equal(node.children[0].type, 'property');
@@ -112,12 +112,12 @@ describe('CSS Parser', () => {
 
 		node = model.firstChild;
 		assert.equal(node.type, 'rule');
-		assert.equal(node.name, 'foo /* a:b; */, bar');
+		assert.equal(node.selector, 'foo /* a:b; */, bar');
 		assert.equal(node.children.length, 1);
 
 		node = node.firstChild;
 		assert.equal(node.type, 'rule');
-		assert.equal(node.name, 'a, // c:b {}\n\tb');
+		assert.equal(node.selector, 'a, // c:b {}\n\tb');
 		assert.equal(node.children.length, 1);
 
 		node = node.firstChild;

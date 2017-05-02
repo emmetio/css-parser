@@ -6,11 +6,11 @@ import createRule from './lib/rule';
 import createProperty from './lib/property';
 
 import atKeyword from './lib/tokens/at-keyword';
+import Token from './lib/tokens/token';
 import { eatString } from './lib/tokens/string';
 import { eatComment } from './lib/tokens/comment';
 import { eatWhitespace } from './lib/tokens/whitespace';
 import { eatUrl } from './lib/tokens/url';
-import { Token } from './lib/tokens/index';
 
 const LBRACE          = 40;  // (
 const RBRACE          = 41;  // )
@@ -58,7 +58,7 @@ export default function parseStylesheet(source) {
 			flush();
 
 			// Finalize context section
-			ctx.addChild(createProperty(stream, tokens));
+			ctx.add(createProperty(stream, tokens));
 
 			if (ctx.type !== 'stylesheet') {
 				// In case of invalid stylesheet with redundant `}`,
@@ -70,12 +70,12 @@ export default function parseStylesheet(source) {
 			tokens.length = 0;
 		} else if (stream.eat(PROP_TERMINATOR)) {
 			flush();
-			ctx.addChild(createProperty(stream, tokens, new Token(stream, 'termintator')));
+			ctx.add(createProperty(stream, tokens, new Token(stream, 'termintator')));
 			tokens.length = 0;
 		} else if (stream.eat(RULE_START)) {
 			flush();
 			child = createRule(stream, tokens, new Token(stream, 'body'));
-			ctx.addChild(child);
+			ctx.add(child);
 			ctx = child;
 			tokens.length = 0;
 		} else if (token = atKeyword(stream)) {
@@ -99,7 +99,7 @@ export default function parseStylesheet(source) {
 	}
 
 	// Finalize all the rest properties
-	ctx.addChild(createProperty(stream, tokens));
+	ctx.add(createProperty(stream, tokens));
 
 	return root;
 }
