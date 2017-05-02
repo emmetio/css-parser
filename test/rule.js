@@ -7,7 +7,7 @@ require('babel-register');
 const parse = require('../index').default;
 
 describe('Rule Fragments', () => {
-	const parseRule = sel => parse(sel).firstChild;
+	const parseRule = source => parse(source).firstChild;
 
 	it('should consume single selector', () => {
 		const rule = parseRule('  div.class1.class2#id { } ');
@@ -15,95 +15,113 @@ describe('Rule Fragments', () => {
 		assert.equal(rule.start, 2);
 		assert.equal(rule.end, 26);
 
-		assert.equal(rule.name, 'div.class1.class2#id');
-		assert.equal(rule.nameToken.start, 2);
-		assert.equal(rule.nameToken.end, 22);
-		assert.equal(rule.nameToken.fragments.length, 1);
+		assert.equal(rule.selector, 'div.class1.class2#id');
+		assert.equal(rule.selectorToken.start, 2);
+		assert.equal(rule.selectorToken.end, 22);
+		assert.equal(rule.parsedSelector.length, 1);
 
-		const selector = rule.nameToken.fragments[0];
+		const selector = rule.parsedSelector[0];
 
 		assert.equal(selector.valueOf(), 'div.class1.class2#id');
-		assert.equal(selector.fragments.length, 4);
+		assert.equal(selector.size, 4);
 
-		const f = selector.fragments;
-		assert.equal(f[0].type, 'ident');
-		assert.equal(f[0].valueOf(), 'div');
+		let item = selector.item(0);
+		assert.equal(item.type, 'ident');
+		assert.equal(item.valueOf(), 'div');
 
-		assert.equal(f[1].type, 'class');
-		assert.equal(f[1].valueOf(), '.class1');
-		assert.equal(f[1].name.valueOf(), 'class1');
+		item = selector.item(1);
+		assert.equal(item.type, 'class');
+		assert.equal(item.valueOf(), '.class1');
+		assert.equal(item.item(0).valueOf(), 'class1');
 
-		assert.equal(f[2].type, 'class');
-		assert.equal(f[2].valueOf(), '.class2');
-		assert.equal(f[2].name.valueOf(), 'class2');
+		item = selector.item(2);
+		assert.equal(item.type, 'class');
+		assert.equal(item.valueOf(), '.class2');
+		assert.equal(item.item(0).valueOf(), 'class2');
 
-		assert.equal(f[3].type, 'id');
-		assert.equal(f[3].valueOf(), '#id');
-		assert.equal(f[3].name.valueOf(), 'id');
+		item = selector.item(3);
+		assert.equal(item.type, 'id');
+		assert.equal(item.valueOf(), '#id');
+		assert.equal(item.item(0).valueOf(), 'id');
 	});
 
 	it('should consume multiple selectors', () => {
 		const rule = parseRule('a, [foo="bar,baz"], /* c */ .d { }');
-		assert.equal(rule.name, 'a, [foo="bar,baz"], /* c */ .d');
-		assert.equal(rule.nameToken.fragments.length, 3);
+		assert.equal(rule.selector, 'a, [foo="bar,baz"], /* c */ .d');
+		assert.equal(rule.parsedSelector.length, 3);
 
-		let selector;
+		let selector, item;
 
-		selector = rule.nameToken.fragments[0];
+		selector = rule.parsedSelector[0];
 		assert.equal(selector.valueOf(), 'a');
-		assert.equal(selector.fragments.length, 1);
+		assert.equal(selector.size, 1);
 
-		selector = rule.nameToken.fragments[1];
+		selector = rule.parsedSelector[1];
 		assert.equal(selector.valueOf(), '[foo="bar,baz"]');
-		assert.equal(selector.fragments.length, 1);
-		assert.equal(selector.fragments[0].type, 'attribute');
-		assert.equal(selector.fragments[0].name.valueOf(), 'foo');
-		assert.equal(selector.fragments[0].value.valueOf(), '"bar,baz"');
-		assert.equal(selector.fragments[0].value.value.valueOf(), 'bar,baz');
+		assert.equal(selector.size, 1);
 
-		selector = rule.nameToken.fragments[2];
+		item = selector.item(0);
+		assert.equal(item.type, 'attribute');
+		assert.equal(item.item(0).valueOf(), 'foo');
+		assert.equal(item.item(1).valueOf(), '=');
+		assert.equal(item.item(2).valueOf(), '"bar,baz"');
+		assert.equal(item.item(2).item(0).valueOf(), 'bar,baz');
+
+		selector = rule.parsedSelector[2];
 		assert.equal(selector.valueOf(), '.d');
-		assert.equal(selector.fragments.length, 1);
+		assert.equal(selector.size, 1);
 	});
 
 	it('should consume arguments', () => {
 		const rule = parseRule('@media (min-width: 700px), handheld and (orientation: landscape) {  }');
+		let expr, item, arg;
 
-		assert.equal(rule.name, '@media');
-		assert.equal(rule.expressions.length, 2);
+		assert.equal(rule.type, 'at-rule');
+		assert.equal(rule.name, 'media');
+		assert.equal(rule.parsedExpression.length, 2);
 
-		let expr = rule.expressions[0];
-		assert.equal(expr.type, 'fragments');
+		expr = rule.parsedExpression[0];
 		assert.equal(expr.valueOf(), '(min-width: 700px)');
-		assert.equal(expr.fragments[0].type, 'arguments');
-		assert.equal(expr.fragments[0].list.length, 1);
-		assert.equal(expr.fragments[0].list[0].valueOf(), 'min-width: 700px');
 
-		expr = rule.expressions[1];
-		assert.equal(expr.type, 'fragments');
+		item = expr.item(0);
+		assert.equal(item.type, 'arguments');
+		assert.equal(item.size, 1);
+
+		arg = item.item(0);
+		assert.equal(arg.type, 'argument');
+
+		assert.equal(arg.item(0).type, 'ident');
+		assert.equal(arg.item(0).valueOf(), 'min-width');
+		assert.equal(arg.item(1).type, 'separator');
+		assert.equal(arg.item(1).valueOf(), ':');
+		assert.equal(arg.item(2).type, 'whitespace');
+		assert.equal(arg.item(3).type, 'number');
+		assert.equal(arg.item(3).valueOf(), '700px');
+
+		expr = rule.parsedExpression[1];
 		assert.equal(expr.valueOf(), 'handheld and (orientation: landscape)');
 	});
 
 	it('should consume pseudo-selectors', () => {
 		const rule = parseRule('a:hover, b::before {  }');
 
-		assert.equal(rule.name, 'a:hover, b::before');
-		assert.equal(rule.nameToken.fragments.length, 2);
+		assert.equal(rule.selector, 'a:hover, b::before');
+		assert.equal(rule.parsedSelector.length, 2);
 
-		let sel = rule.nameToken.fragments[0];
-		assert.equal(sel.fragments.length, 2);
-		assert.equal(sel.fragments[0].type, 'ident');
-		assert.equal(sel.fragments[0].valueOf(), 'a');
-		assert.equal(sel.fragments[1].type, 'pseudo');
-		assert.equal(sel.fragments[1].valueOf(), ':hover');
-		assert.equal(sel.fragments[1].name.valueOf(), 'hover');
+		let sel = rule.parsedSelector[0];
+		assert.equal(sel.size, 2);
+		assert.equal(sel.item(0).type, 'ident');
+		assert.equal(sel.item(0).valueOf(), 'a');
+		assert.equal(sel.item(1).type, 'pseudo');
+		assert.equal(sel.item(1).valueOf(), ':hover');
+		assert.equal(sel.item(1).item(0).valueOf(), 'hover');
 
-		sel = rule.nameToken.fragments[1];
-		assert.equal(sel.fragments.length, 2);
-		assert.equal(sel.fragments[0].type, 'ident');
-		assert.equal(sel.fragments[0].valueOf(), 'b');
-		assert.equal(sel.fragments[1].type, 'pseudo');
-		assert.equal(sel.fragments[1].valueOf(), '::before');
-		assert.equal(sel.fragments[1].name.valueOf(), 'before');
+		sel = rule.parsedSelector[1];
+		assert.equal(sel.size, 2);
+		assert.equal(sel.item(0).type, 'ident');
+		assert.equal(sel.item(0).valueOf(), 'b');
+		assert.equal(sel.item(1).type, 'pseudo');
+		assert.equal(sel.item(1).valueOf(), '::before');
+		assert.equal(sel.item(1).item(0).valueOf(), 'before');
 	});
 });

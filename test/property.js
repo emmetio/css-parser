@@ -6,7 +6,7 @@ const assert = require('assert');
 require('babel-register');
 const parse = require('../index').default;
 
-describe('Property Fragments', () => {
+describe.skip('Property Fragments', () => {
 	const parseProperty = prop => parse(prop).firstChild;
 	it('should parse simple property', () => {
 		const prop = parseProperty('padding: 10px 20% ;');
