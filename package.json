@@ -1,6 +1,6 @@
 {
   "name": "@emmetio/css-parser",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "CSS/LESS/SCSS fast and minimalistic parser",
   "main": "./dist/css-parser.cjs.js",
   "module": "./dist/css-parser.es.js",
