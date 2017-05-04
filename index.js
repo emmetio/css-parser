@@ -54,6 +54,21 @@ export default function parseStylesheet(source) {
 			}
 			// Skip delimiter if there are already consumend tokens: most likely
 			// it’s a part of pseudo-selector
+		} else if (stream.eat(PROP_TERMINATOR)) {
+			flush();
+			ctx.add(createProperty(stream, tokens, new Token(stream, 'termintator')));
+			tokens.length = 0;
+		} else if (stream.eat(RULE_START)) {
+			flush();
+			child = createRule(stream, tokens, new Token(stream, 'body-start'));
+			ctx.add(child);
+			ctx = child;
+			tokens.length = 0;
+		} else if (token = atKeyword(stream)) {
+			// Explictly consume @-tokens since it defines how rule or property
+			// should be pre-parsed
+			flush();
+			tokens.push(token);
 		} else if (stream.eat(RULE_END)) {
 			flush();
 
@@ -63,26 +78,11 @@ export default function parseStylesheet(source) {
 			if (ctx.type !== 'stylesheet') {
 				// In case of invalid stylesheet with redundant `}`,
 				// don’t modify root section.
-				ctx.contentToken.end = stream.pos;
+				ctx.contentEndToken = new Token(stream, 'body-end');
 				ctx = ctx.parent;
 			}
 
 			tokens.length = 0;
-		} else if (stream.eat(PROP_TERMINATOR)) {
-			flush();
-			ctx.add(createProperty(stream, tokens, new Token(stream, 'termintator')));
-			tokens.length = 0;
-		} else if (stream.eat(RULE_START)) {
-			flush();
-			child = createRule(stream, tokens, new Token(stream, 'body'));
-			ctx.add(child);
-			ctx = child;
-			tokens.length = 0;
-		} else if (token = atKeyword(stream)) {
-			// Explictly consume @-tokens since it defines how rule or property
-			// should be pre-parsed
-			flush();
-			tokens.push(token);
 		} else if (eatUrl(stream) || eatBraces(stream) || eatString(stream) || stream.next()) {
 			// NB explicitly consume `url()` token since it may contain
 			// an unquoted url like `http://example.com` which interferes
@@ -100,6 +100,13 @@ export default function parseStylesheet(source) {
 
 	// Finalize all the rest properties
 	ctx.add(createProperty(stream, tokens));
+
+	// Finalize unterminated rules
+	stream.start = stream.pos;
+	while (ctx && ctx !== root) {
+		ctx.contentEndToken = new Token(stream, 'body-end');
+		ctx = ctx.parent;
+	}
 
 	return root;
 }
