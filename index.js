@@ -7,8 +7,8 @@ import createProperty from './lib/property';
 
 import atKeyword from './lib/tokens/at-keyword';
 import Token from './lib/tokens/token';
+import comment from './lib/tokens/comment';
 import { eatString } from './lib/tokens/string';
-import { eatComment } from './lib/tokens/comment';
 import { eatWhitespace } from './lib/tokens/whitespace';
 import { eatUrl } from './lib/tokens/url';
 
@@ -32,7 +32,12 @@ export default function parseStylesheet(source) {
 	};
 
 	while (!stream.eof()) {
-		if (eatWhitespace(stream) || eatComment(stream)) {
+		if (eatWhitespace(stream)) {
+			continue;
+		}
+
+		if (token = comment(stream)) {
+			root.addComment(token);
 			continue;
 		}
 
@@ -83,7 +88,7 @@ export default function parseStylesheet(source) {
 			}
 
 			tokens.length = 0;
-		} else if (eatUrl(stream) || eatBraces(stream) || eatString(stream) || stream.next()) {
+		} else if (eatUrl(stream) || eatBraces(stream, root) || eatString(stream) || stream.next()) {
 			// NB explicitly consume `url()` token since it may contain
 			// an unquoted url like `http://example.com` which interferes
 			// with single-line comment
@@ -115,11 +120,12 @@ export default function parseStylesheet(source) {
  * Consumes content inside round braces. Mostly used to skip `;` token inside
  * expressions since in LESS it is also used to separate function arguments
  * @param  {StringReader} stream
+ * @param  {Stylesheet}   root   A stylesheet root. Used to accumulate comments
  * @return {Boolean}
  */
-function eatBraces(stream) {
+function eatBraces(stream, root) {
 	if (stream.eat(LBRACE)) {
-		let stack = 1;
+		let stack = 1, token;
 
 		while (!stream.eof()) {
 			if (stream.eat(RBRACE)) {
@@ -129,8 +135,13 @@ function eatBraces(stream) {
 				}
 			} else if (stream.eat(LBRACE)) {
 				stack++;
+			} else if (eatUrl(stream) || eatString(stream)) {
+				continue;
+			} else if (token = comment(stream)) {
+				root.addComment(token);
+				continue;
 			} else {
-				eatUrl(stream) || eatString(stream) || eatComment(stream) || stream.next();
+				stream.next();
 			}
 		}
 
