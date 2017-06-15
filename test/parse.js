@@ -137,4 +137,39 @@ describe('CSS Parser', () => {
 		assert.equal(node.children[1].name, 'src');
 		assert.equal(node.children[1].value.length, 3132);
 	});
+
+	it('should handle interpolation tokens', () => {
+		const model = parse(readFile('./fixtures/interpolation.scss'));
+		assert.equal(model.children.length, 1);
+
+		let node = model.firstChild;
+		// console.log(node);
+		assert.equal(node.selector, '.#{$foo + 1}bar');
+		assert.equal(node.parsedSelector.length, 1);
+
+		// Interpolation in selector
+		const selector = node.parsedSelector[0];
+		assert.equal(selector.size, 3);
+		assert.equal(selector.item(0).type, 'unknown');
+		assert.equal(selector.item(0).valueOf(), '.');
+		assert.equal(selector.item(1).type, 'interpolation');
+		assert.equal(selector.item(1).size, 5);
+		assert.equal(selector.item(1).valueOf(), '#{$foo + 1}');
+		assert.equal(selector.item(1).item(0).valueOf(), '$foo');
+
+		// Interpolation in property
+		const prop = node.firstChild;
+		assert.equal(prop.name, 'padding-#{$bar}');
+		assert.equal(prop.parsedName.length, 2);
+		assert.equal(prop.parsedName[0].type, 'ident');
+		assert.equal(prop.parsedName[0].valueOf(), 'padding-');
+		assert.equal(prop.parsedName[1].type, 'interpolation');
+		assert.equal(prop.parsedName[1].valueOf(), '#{$bar}');
+		assert.equal(prop.parsedName[1].item(0).valueOf(), '$bar');
+
+		assert.equal(prop.parsedValue.length, 1);
+		assert.equal(prop.parsedValue[0].size, 3);
+		assert.equal(prop.parsedValue[0].item(0).valueOf(), '10px');
+		assert.equal(prop.parsedValue[0].item(2).valueOf(), '#{$baz}');
+	});
 });
