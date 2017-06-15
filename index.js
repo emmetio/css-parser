@@ -5,12 +5,16 @@ import Stylesheet from './lib/stylesheet';
 import createRule from './lib/rule';
 import createProperty from './lib/property';
 
+import { any, selector, value, keyword, formatting, interpolation } from './lib/tokens/index';
 import atKeyword from './lib/tokens/at-keyword';
 import Token from './lib/tokens/token';
+import ident from './lib/tokens/ident';
 import comment from './lib/tokens/comment';
-import { eatString } from './lib/tokens/string';
-import { eatWhitespace } from './lib/tokens/whitespace';
-import { eatUrl } from './lib/tokens/url';
+import string, { eatString } from './lib/tokens/string';
+import whitespace, { eatWhitespace } from './lib/tokens/whitespace';
+import url, { eatUrl } from './lib/tokens/url';
+import variable from './lib/tokens/variable';
+import { eatInterpolation } from './lib/tokens/interpolation';
 
 const LBRACE          = 40;  // (
 const RBRACE          = 41;  // )
@@ -69,11 +73,6 @@ export default function parseStylesheet(source) {
 			ctx.add(child);
 			ctx = child;
 			tokens.length = 0;
-		} else if (token = atKeyword(stream)) {
-			// Explictly consume @-tokens since it defines how rule or property
-			// should be pre-parsed
-			flush();
-			tokens.push(token);
 		} else if (stream.eat(RULE_END)) {
 			flush();
 
@@ -88,7 +87,13 @@ export default function parseStylesheet(source) {
 			}
 
 			tokens.length = 0;
-		} else if (eatUrl(stream) || eatBraces(stream, root) || eatString(stream) || stream.next()) {
+		} else if (token = atKeyword(stream)) {
+			// Explictly consume @-tokens since it defines how rule or property
+			// should be pre-parsed
+			flush();
+			tokens.push(token);
+		} else if (eatUrl(stream) || eatInterpolation(stream) || eatBraces(stream, root)
+				|| eatString(stream) || stream.next()) {
 			// NB explicitly consume `url()` token since it may contain
 			// an unquoted url like `http://example.com` which interferes
 			// with single-line comment
@@ -114,6 +119,13 @@ export default function parseStylesheet(source) {
 	}
 
 	return root;
+}
+
+// Export tokens for later re-parsing in preprocessor stylesheets
+export {
+	Token, any, selector, value, keyword, variable,
+	formatting, comment, whitespace, ident, string, url,
+	interpolation
 }
 
 /**
