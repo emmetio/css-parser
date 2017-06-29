@@ -160,12 +160,12 @@ describe('CSS Parser', () => {
 		// Interpolation in property
 		const prop = node.firstChild;
 		assert.equal(prop.name, 'padding-#{$bar}');
-		assert.equal(prop.parsedName.length, 2);
-		assert.equal(prop.parsedName[0].type, 'ident');
-		assert.equal(prop.parsedName[0].valueOf(), 'padding-');
-		assert.equal(prop.parsedName[1].type, 'interpolation');
-		assert.equal(prop.parsedName[1].valueOf(), '#{$bar}');
-		assert.equal(prop.parsedName[1].item(0).valueOf(), '$bar');
+		assert.equal(prop.parsedName.size, 2);
+		assert.equal(prop.parsedName.item(0).type, 'ident');
+		assert.equal(prop.parsedName.item(0).valueOf(), 'padding-');
+		assert.equal(prop.parsedName.item(1).type, 'interpolation');
+		assert.equal(prop.parsedName.item(1).valueOf(), '#{$bar}');
+		assert.equal(prop.parsedName.item(1).item(0).valueOf(), '$bar');
 
 		assert.equal(prop.parsedValue.length, 1);
 		assert.equal(prop.parsedValue[0].size, 3);

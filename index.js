@@ -4,6 +4,7 @@ import StreamReader from '@emmetio/stream-reader';
 import Stylesheet from './lib/stylesheet';
 import createRule from './lib/rule';
 import createProperty from './lib/property';
+import parseList from './lib/list';
 
 import { any, selector, value, keyword, formatting, interpolation } from './lib/tokens/index';
 import atKeyword from './lib/tokens/at-keyword';
@@ -123,9 +124,13 @@ export default function parseStylesheet(source) {
 
 // Export tokens for later re-parsing in preprocessor stylesheets
 export {
+	// tokens
 	Token, any, selector, value, keyword, variable,
 	formatting, comment, whitespace, ident, string, url,
-	interpolation
+	interpolation,
+
+	// helpers
+	parseList, createProperty, createRule
 }
 
 /**
