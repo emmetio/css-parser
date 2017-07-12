@@ -6,7 +6,7 @@ import createRule from './lib/rule';
 import createProperty from './lib/property';
 import parseList from './lib/list';
 
-import { any, selector, value, keyword, formatting, interpolation } from './lib/tokens/index';
+import consumeToken, { any, selector, value, keyword, formatting, interpolation } from './lib/tokens/index';
 import atKeyword from './lib/tokens/at-keyword';
 import Token from './lib/tokens/token';
 import ident from './lib/tokens/ident';
@@ -120,6 +120,26 @@ export default function parseStylesheet(source) {
 	}
 
 	return root;
+}
+
+/**
+ * Parses given source into tokens
+ * @param  {String|StreamReader} source
+ * @param  {Function} [consumer] Token consumer function, for example, `selector`,
+ * `value` etc. from `lib/tokens` module. Default is generic `consumeToken`
+ * @return {Token[]}
+ */
+export function lexer(source, consumer) {
+	consumer = consumer || consumeToken;
+	const stream = typeof source === 'string' ? new StreamReader(source) : source;
+	const result = [];
+	let token;
+
+	while (!stream.eof() && (token = consumer(stream))) {
+		result.push(token);
+	}
+
+	return result;
 }
 
 // Export tokens for later re-parsing in preprocessor stylesheets
