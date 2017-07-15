@@ -3,14 +3,16 @@
 import StreamReader from '@emmetio/stream-reader';
 import Stylesheet from './lib/stylesheet';
 import createRule from './lib/rule';
+import createAtRule from './lib/at-rule';
 import createProperty from './lib/property';
-import parseList from './lib/list';
+import { parseMediaExpression, parsePropertyName, parsePropertyValue, parseSelector } from './lib/parse';
 
-import consumeToken, { any, selector, value, keyword, formatting, interpolation } from './lib/tokens/index';
+import consumeToken, { any, selector, value, keyword, formatting } from './lib/tokens/index';
 import atKeyword from './lib/tokens/at-keyword';
 import Token from './lib/tokens/token';
 import ident from './lib/tokens/ident';
 import comment from './lib/tokens/comment';
+import interpolation from './lib/tokens/interpolation';
 import string, { eatString } from './lib/tokens/string';
 import whitespace, { eatWhitespace } from './lib/tokens/whitespace';
 import url, { eatUrl } from './lib/tokens/url';
@@ -70,7 +72,9 @@ export default function parseStylesheet(source) {
 			tokens.length = 0;
 		} else if (stream.eat(RULE_START)) {
 			flush();
-			child = createRule(stream, tokens, new Token(stream, 'body-start'));
+			child = tokens[0].type === 'at-keyword'
+				? createAtRule(stream, tokens, new Token(stream, 'body-start'))
+				: createRule(stream, tokens, new Token(stream, 'body-start'));
 			ctx.add(child);
 			ctx = child;
 			tokens.length = 0;
@@ -149,9 +153,12 @@ export {
 	formatting, comment, whitespace, ident, string, url,
 	interpolation,
 
+	// parsers
+	parseMediaExpression, parsePropertyName, parsePropertyValue, parseSelector,
+
 	// helpers
-	parseList, createProperty, createRule
-}
+	createProperty, createRule, createAtRule
+};
 
 /**
  * Consumes content inside round braces. Mostly used to skip `;` token inside

@@ -1,7 +1,5 @@
 'use strict';
 
-const fs = require('fs');
-const path = require('path');
 const assert = require('assert');
 require('babel-register');
 const parse = require('../index').default;

@@ -3,8 +3,10 @@
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
+const StreamReader = require('@emmetio/stream-reader');
 require('babel-register');
 const parse = require('../index').default;
+const interpolation = require('../index').interpolation;
 
 describe('CSS Parser', () => {
 	const readFile = file => fs.readFileSync(path.resolve(__dirname, file), 'utf8');
@@ -153,9 +155,7 @@ describe('CSS Parser', () => {
 		assert.equal(selector.item(0).type, 'unknown');
 		assert.equal(selector.item(0).valueOf(), '.');
 		assert.equal(selector.item(1).type, 'interpolation');
-		assert.equal(selector.item(1).size, 5);
 		assert.equal(selector.item(1).valueOf(), '#{$foo + 1}');
-		assert.equal(selector.item(1).item(0).valueOf(), '$foo');
 
 		// Interpolation in property
 		const prop = node.firstChild;
@@ -171,5 +171,21 @@ describe('CSS Parser', () => {
 		assert.equal(prop.parsedValue[0].size, 3);
 		assert.equal(prop.parsedValue[0].item(0).valueOf(), '10px');
 		assert.equal(prop.parsedValue[0].item(2).valueOf(), '#{$baz}');
+	});
+
+	it('should detect interpolation in string', () => {
+		const stream = new StreamReader('"a: #{$a}, b: #{length($b)}"');
+		const result = [];
+		let token;
+
+		while (!stream.eof()) {
+			if (token = interpolation(stream)) {
+				result.push(token);
+			} else {
+				stream.next();
+			}
+		}
+
+		assert.equal(result.length, 2);
 	});
 });
