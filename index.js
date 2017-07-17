@@ -12,12 +12,12 @@ import atKeyword from './lib/tokens/at-keyword';
 import Token from './lib/tokens/token';
 import ident from './lib/tokens/ident';
 import comment from './lib/tokens/comment';
-import interpolation from './lib/tokens/interpolation';
+import backtick, { eatBacktick } from './lib/tokens/backtick';
+import interpolation, { eatInterpolation } from './lib/tokens/interpolation';
 import string, { eatString } from './lib/tokens/string';
 import whitespace, { eatWhitespace } from './lib/tokens/whitespace';
 import url, { eatUrl } from './lib/tokens/url';
 import variable from './lib/tokens/variable';
-import { eatInterpolation } from './lib/tokens/interpolation';
 
 const LBRACE          = 40;  // (
 const RBRACE          = 41;  // )
@@ -97,8 +97,8 @@ export default function parseStylesheet(source) {
 			// should be pre-parsed
 			flush();
 			tokens.push(token);
-		} else if (eatUrl(stream) || eatInterpolation(stream) || eatBraces(stream, root)
-				|| eatString(stream) || stream.next()) {
+		} else if (eatUrl(stream) || eatInterpolation(stream) || eatBacktick(stream) 
+				|| eatBraces(stream, root) || eatString(stream) || stream.next()) {
 			// NB explicitly consume `url()` token since it may contain
 			// an unquoted url like `http://example.com` which interferes
 			// with single-line comment
@@ -151,7 +151,7 @@ export {
 	// tokens
 	Token, any, selector, value, keyword, variable,
 	formatting, comment, whitespace, ident, string, url,
-	interpolation,
+	interpolation, backtick,
 
 	// parsers
 	parseMediaExpression, parsePropertyName, parsePropertyValue, parseSelector,
