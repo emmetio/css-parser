@@ -72,12 +72,14 @@ export default function parseStylesheet(source) {
 			tokens.length = 0;
 		} else if (stream.eat(RULE_START)) {
 			flush();
-			child = tokens[0].type === 'at-keyword'
+			if (tokens.length > 0) {
+				child = tokens[0].type === 'at-keyword'
 				? createAtRule(stream, tokens, new Token(stream, 'body-start'))
 				: createRule(stream, tokens, new Token(stream, 'body-start'));
-			ctx.add(child);
-			ctx = child;
-			tokens.length = 0;
+				ctx.add(child);
+				ctx = child;
+				tokens.length = 0;
+			}
 		} else if (stream.eat(RULE_END)) {
 			flush();
 
